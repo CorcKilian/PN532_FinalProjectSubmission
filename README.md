@@ -277,6 +277,7 @@ if (read_registerGeneric(0x63, 0x03, &rxmode_val)) {
 This was actually used extensivly for de-bugging so much so I created a dedicated higher level function to dump all radio settings:
 
 ![De-Bugging Radio](Images/Testing.png)
+
 **Writing to a Register:**
 
 ```c
