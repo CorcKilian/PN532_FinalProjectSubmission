@@ -211,27 +211,6 @@ fail:
 }
 
 /**
- * checkStatus
- *
- * Performs a simple status check or data-read initiation on the PN532.
- *
- * @param type 2 for status read, 3 for data read.
- */
-void checkStatus(uint8_t type) {
-    PN532_SS_LOW();
-    delayPN(PN532_Delay80MHZ);  // Ensure PN532 is awake
-
-    if (type == 2) {
-        transferSPI8(SPI1, 0x02);
-    } else if (type == 3) {
-        transferSPI8(SPI1, 0x03);
-    }
-
-    transferSPI8(SPI1, 0xFF);
-    PN532_SS_HIGH();
-}
-
-/**
  * PN532_scanForTag
  *
  * Sends an InListPassiveTarget command and parses tag information.
@@ -417,65 +396,6 @@ void sendACK(void)
 }
 
 
-/**
- * PN532_authenticateBlock
- *
- * Attempts to authenticate a block on a MIFARE Classic tag using Key A or Key B.
- * Sends InDataExchange command to perform full Crypto1 challenge via PN532.
- *
- * @param block The block number to authenticate.
- * @param key_type 'A' or 'B' (MIFARE Key A or Key B)
- * @param key Pointer to 6-byte key
- * @param uid Pointer to 4-byte UID of the card
- * @param nt_out Optional: pointer to 4-byte buffer to receive nonce (if auth fails)
- * @return true if authentication was successful, false otherwise.
- */
-bool PN532_authenticateBlock(uint8_t block, char key_type, const uint8_t *key, const uint8_t *uid, uint8_t *nt_out) {
-    if (!key || !uid) return false;
-
-    uint8_t auth_cmd[14] = {
-        0x40,  // InDataExchange
-        0x01,  // Target number (always 1)
-        (key_type == 'A') ? 0x60 : 0x61,  // MIFARE AUTH A or B
-        block,
-        key[0], key[1], key[2], key[3], key[4], key[5],
-        uid[0], uid[1], uid[2], uid[3]
-    };
-
-    sendCommand(auth_cmd, sizeof(auth_cmd));
-    if (!PN532_readACK()) {
-        printf("❌ No ACK for InDataExchange AUTH\n");
-        return false;
-    }
-
-    uint8_t response[PN532_MAX_FRAME_LEN] = {0};
-    uint8_t len = 0;
-    if (!PN532_readResponse(response, &len)) {
-        printf("❌ Failed to read AUTH response\n");
-        return false;
-    }
-
-    if (len >= 1 && response[0] == PN532_RESPONSE_INDATAEXCHANGE) {
-        if (len >= 2 && response[1] == 0x00) {
-            // Auth success
-            printf("✅ Auth SUCCESS for block %d\n", block);
-            return true;
-        } else {
-            // Auth failed, response[1] is error code (likely 0x01)
-            printf("❌ Auth FAIL for block %d (status = 0x%02X)\n", block, response[1]);
-
-            // Card may have still returned nonce NT (check len ≥ 6)
-            if (nt_out && len >= 6) {
-                memcpy(nt_out, &response[2], 4);
-                printf("🧠 NT (nonce): %02X %02X %02X %02X\n", nt_out[0], nt_out[1], nt_out[2], nt_out[3]);
-            }
-        }
-    } else {
-        printf("⚠️ Unexpected response to AUTH\n");
-    }
-
-    return false;
-}
 
 /**
  * check_CRC_transmission_status
@@ -523,57 +443,6 @@ void Read_TransReg(void) {
             printf("  RX[%u] = 0x%02X\r\n", i, rx_buf[i]);
         }
     }
-}
-
-/**
- * PN532_requestAuthNonce
- *
- * Sends an AUTH request using InCommunicateThru to initiate MIFARE Classic auth.
- * Gets the card's nonce (NT) as raw response (no encryption step).
- *
- * @param block Block to auth
- * @param key_type 'A' or 'B'
- * @param uid Pointer to 4-byte UID
- * @param nt_out Pointer to 4-byte buffer to receive nonce
- * @return true if nonce received, false otherwise
- */
-
-bool PN532_requestAuthNonce(uint8_t block, char key_type, uint8_t *nt_out) {
-    if (!nt_out) return false;
-
-    uint8_t payload[2];  // 0x60/0x61, block
-    payload[0] = (key_type == 'A') ? 0x60 : 0x61;
-    payload[1] = block;
-
-    uint8_t full_cmd[3]; // D4 42 + payload[2]
-    full_cmd[0] = PN532_COMMAND_INCOMMUNICATETHRU;
-    memcpy(&full_cmd[1], payload, 2);
-
-    sendCommand(full_cmd, sizeof(full_cmd));
-
-    if (!PN532_readACK()) {
-        //printf("❌ No ACK for InCommunicateThru AUTH\n");
-        return false;
-    }
-
-    uint8_t response[16];
-    uint8_t len = 0;
-
-    if (!PN532_readResponse(response, &len)) {
-       // printf("❌ Failed to read NT response from card\n");
-        return false;
-    }
-
-    if (len >= 7 && response[0] == 0xD5 &&
-        response[1] == (PN532_COMMAND_INCOMMUNICATETHRU + 1) &&
-        response[2] == 0x00) {
-        memcpy(nt_out, &response[3], 4);
-        //printf("✅ NT received: %02X %02X %02X %02X\n", nt_out[0], nt_out[1], nt_out[2], nt_out[3]);
-        return true;
-    }
-
-    //printf("⚠️ Invalid or short response to AUTH (len=%d)\n", len);
-    return false;
 }
 
 
@@ -798,80 +667,6 @@ void dumpRadioSettings(void) {
 }
 
 
-/**
- * pn532_selectTarget
- *
- * Send InSelect <Tg> to re-activate a target previously returned by
- * InListPassiveTarget (or InAutoPoll).  Tg is the logical target number.
- *
- * @param tg  Logical target number (e.g. tag_info.target_number)
- * @return    true if PN532 returns Status=0x00, false otherwise
- */
-bool pn532_selectTarget(uint8_t tg) {
-    uint8_t cmd[] = {
-        PN532_COMMAND_INSELECT,  // 0x54
-        tg
-    };
-
-    sendCommand(cmd, sizeof(cmd));
-    if (!PN532_readACK()) {
-        //printf("❌ No ACK for InSelect Tg=%u\n", tg);
-        return false;
-    }
-
-    uint8_t resp[PN532_MAX_FRAME_LEN];
-    uint8_t len = 0;
-    if (!PN532_readResponse(resp, &len)) {
-        //printf("❌ No response to InSelect Tg=%u\n", tg);
-        return false;
-    }
-
-    // resp[0] should be PN532_COMMAND_INSELECT+1 = 0x55, resp[1] is Status
-    if (len >= 2 && resp[0] == (PN532_COMMAND_INSELECT + 1) && resp[1] == 0x00) {
-        //printf("✅ InSelect Tg=%u OK\n", tg);
-        return true;
-    }
-
-    //printf("⚠️ InSelect Tg=%u failed: Status=0x%02X\n", tg, (len>=2?resp[1]:0xFF));
-    return false;
-}
-
-/**
- * pn532_deselectTarget
- *
- * Send InDeselect <Tg> to drop/erase that target.  If Tg==0, all targets are released.
- *
- * @param tg  Logical target number (or 0 for “all”)
- * @return    true if PN532 returns Status=0x00, false otherwise
- */
-bool pn532_deselectTarget(uint8_t tg) {
-    uint8_t cmd[] = {
-        PN532_COMMAND_INDESELECT,  // 0x44
-        tg
-    };
-
-    sendCommand(cmd, sizeof(cmd));
-    if (!PN532_readACK()) {
-        printf("❌ No ACK for InDeselect Tg=%u\n", tg);
-        return false;
-    }
-
-    uint8_t resp[PN532_MAX_FRAME_LEN];
-    uint8_t len = 0;
-    if (!PN532_readResponse(resp, &len)) {
-        printf("❌ No response to InDeselect Tg=%u\n", tg);
-        return false;
-    }
-
-    // resp[0] should be PN532_COMMAND_INDESELECT+1 = 0x45, resp[1] is Status
-    if (len >= 2 && resp[0] == (PN532_COMMAND_INDESELECT + 1) && resp[1] == 0x00) {
-        printf("✅ InDeselect Tg=%u OK\n", tg);
-        return true;
-    }
-
-    printf("⚠️ InDeselect Tg=%u failed: Status=0x%02X\n", tg, (len>=2?resp[1]:0xFF));
-    return false;
-}
 
 /**
  * read_registerGeneric
@@ -1178,11 +973,6 @@ void restore_link_layer_defaults(void)
         1 << 6             // value_bits = set bit 6
     );
 }
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-
-
 
 
 /**

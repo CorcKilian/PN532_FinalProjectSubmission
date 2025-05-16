@@ -17,9 +17,7 @@ void delayPN(volatile uint32_t dly);
 void read_SPIcontrol_register(void);
 void write_SPIcontrol_register(uint8_t value);
 void sendACK(void);
-bool PN532_authenticateBlock(uint8_t block, char key_type, const uint8_t *key, const uint8_t *uid, uint8_t *nt_out);
 void Read_TransReg(void);
-bool PN532_requestAuthNonce(uint8_t block, char key_type, uint8_t *nt_out);
 void Read_RxModeReg(void);
 bool disableRxCRC(void);
 void dumpRadioSettings(void);
@@ -48,22 +46,8 @@ bool PN532_AuthKnownCapture(uint8_t  block,
 
 bool read_registerGeneric(uint8_t addr_high, uint8_t addr_low, uint8_t *value_out);
 void write_registerGeneric(uint8_t addr_high, uint8_t addr_low, uint8_t value);
-bool pn532_deselectTarget(uint8_t tg);
-bool pn532_selectTarget(uint8_t tg);
 bool PN532_setTimerPresetMax(void);
 bool PN532_sendRawPrint(const uint8_t *cmd, uint8_t cmdlen);
-
-bool PN532_authenticateBlock(uint8_t block,
-                             char    key_type,
-                             const uint8_t *key,
-                             const uint8_t *uid,
-                             uint8_t *nt_out);
-
-
-bool PN532_captureUnknownAuth(uint8_t  block,
-    char     keyType,     /* 'A' or 'B' */
-    uint8_t  Nt2_out[4],  /* 4-byte buffer */
-    uint8_t  At2_out[4]);  /* 4-byte buffer */
 
 typedef struct {
     uint8_t nb_targets;        // Number of tags detected
