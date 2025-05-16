@@ -274,7 +274,9 @@ if (read_registerGeneric(0x63, 0x03, &rxmode_val)) {
     printf("CIU_RxMode (0x6303): 0x%02X\n", rxmode_val);
 }
 ```
+This was actually used extensivly for de-bugging so much so I created a dedicated higher level function to dump all radio settings:
 
+![De-Bugging Radio]("Images/Testing")
 **Writing to a Register:**
 
 ```c
@@ -457,7 +459,9 @@ In the end, I was halfway to a full manual MIFARE Classic authentication attack.
 
 Given the tight resource constraints of the STM32 and the lack of lightweight Crypto1 libraries, this hurdle remained unresolved within the project timeline.
 
-## Video
+## Video and wiring diagram:
+
+![Wiring Diagram]("Images/Wiring_Diagram")
 
 
 [![Watch the video](https://img.youtube.com/vi/c1oBBimk2ro/0.jpg)](https://youtu.be/c1oBBimk2ro)
