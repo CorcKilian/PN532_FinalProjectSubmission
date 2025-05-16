@@ -6,6 +6,66 @@ The primary objective of this project is to explore the implementation of the **
 
 After successful high level authentication, the system performs secure **read and write operations to specific memory blocks** on the MIFARE card. This enables practical applications such as access control, secure data storage, and card-based identification systems.
 
+## Motivation: Why This Project Matters
+
+The primary motivation behind this project is to **demystify the internal workings of MIFARE Classic authentication** and provide a hands-on, low-level understanding of **NFC security protocols** beyond high-level abstractions. While countless libraries and commercial tools offer seamless NFC communication, they often hide the underlying mechanics that govern security-critical processes like authentication and encryption.
+
+By intentionally working at the **lowest possible protocol layer**, this project serves several key purposes:
+
+### 1. **Educational Value: Understanding the Black Box**
+
+MIFARE Classic cards are ubiquitous in access control, transportation, and identification systems worldwide. However, their authentication protocol is proprietary and historically opaque. Reverse-engineering the **3-pass mutual authentication** process fosters a deeper understanding of:
+- ISO14443A communication layers.
+- Crypto1 stream cipher mechanics.
+- Real-world application of LFSRs in cryptographic protocols.
+- Practical RF-layer packet framing, CRC, and parity handling.
+
+For embedded developers and security researchers, this knowledge bridges the gap between **"it works"** and **"I understand why it works"**.
+
+### 2. **Security Research: Exposing Weaknesses**
+
+Despite being widely used, MIFARE Classic's security has been proven vulnerable for over a decade. Tools like Proxmark3 and attacks like **nested key recovery** and **darkside attacks** have demonstrated practical exploitation of these weaknesses.
+
+This project aims to:
+- Replicate key recovery techniques from scratch on constrained hardware.
+- Highlight the limitations of the Crypto1 cipher.
+- Showcase how even low-cost microcontrollers can perform meaningful cryptanalysis when given raw protocol access.
+
+By doing so, it reinforces the critical lesson that **"security through obscurity" is not security at all**.
+
+### 3. **Resource-Constrained Embedded Applications**
+
+In the realm of embedded systems, developers often face severe resource constraints:
+- Limited Flash and RAM.
+- Restricted processing power.
+- Tight real-time performance requirements.
+
+Implementing complex cryptographic protocols like Crypto1 without relying on memory-heavy lookup tables forces creative solutions:
+- Bit-serial LFSR implementations.
+- Efficient SPI data handling.
+- Precise RF-layer control via PN532 registers.
+
+These skills are directly transferable to other domains where **lightweight cryptography** and **resource-efficient communication** are paramount.
+
+### 4. **Real-World Impact: Assessing Access Control Security**
+
+Many institutions, including schools, public transport, and corporate offices, continue to rely on MIFARE Classic cards for access control. By demonstrating how these systems can be probed, analyzed, and potentially compromised using only low-cost hardware, this project raises awareness of:
+- The ease of key recovery with basic tools.
+- The importance of upgrading to secure alternatives (e.g., MIFARE DESFire EV2/EV3).
+- The risks of relying on deprecated cryptographic standards.
+
+### 5. **Platform for Future Research**
+
+Beyond immediate goals, the project lays the groundwork for:
+- Implementing **nested key recovery** in constrained environments.
+- Exploring **side-channel analysis** (timing, fault injection) on NFC tags.
+- Building lightweight cryptographic primitives for embedded security research.
+
+### TL;DR: The Why in One Sentence
+
+> *This project is about pulling back the curtain on MIFARE Classic authentication, exposing its weaknesses through hands-on low-level experimentation, and proving that meaningful NFC cryptanalysis is achievable on even the most resource-constrained embedded platforms.*
+
+
 ## Theory
 
 ### MIFARE Classic 3-Pass Authentication
