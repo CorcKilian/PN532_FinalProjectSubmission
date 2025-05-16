@@ -457,6 +457,13 @@ In the end, I was halfway to a full manual MIFARE Classic authentication attack.
 
 Given the tight resource constraints of the STM32 and the lack of lightweight Crypto1 libraries, this hurdle remained unresolved within the project timeline.
 
+## Video
+
+
+[![Watch the video](https://img.youtube.com/vi/c1oBBimk2ro/0.jpg)](https://youtu.be/c1oBBimk2ro)
+
+
+
 ## Conclusion
 
 This project provided an in-depth exploration of the **MIFARE Classic 3-pass authentication protocol**, focusing on low-level NFC communication through direct interaction with the **PN532 NFC module** and an **STM32 microcontroller**.
