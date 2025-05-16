@@ -276,7 +276,7 @@ if (read_registerGeneric(0x63, 0x03, &rxmode_val)) {
 ```
 This was actually used extensivly for de-bugging so much so I created a dedicated higher level function to dump all radio settings:
 
-![De-Bugging Radio](Images/Testing)
+![De-Bugging Radio](Images/Testing.png)
 **Writing to a Register:**
 
 ```c
@@ -461,7 +461,7 @@ Given the tight resource constraints of the STM32 and the lack of lightweight Cr
 
 ## Video and wiring diagram:
 
-![Wiring Diagram](Images/Wiring_Diagram)
+![Wiring Diagram](Images/Wiring_Diagram.png)
 
 
 [![Watch the video](https://img.youtube.com/vi/c1oBBimk2ro/0.jpg)](https://youtu.be/c1oBBimk2ro)
