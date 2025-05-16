@@ -35,14 +35,6 @@ static void set_tx_bit(uint8_t *buf, size_t bitpos, uint8_t v);
 void compute_crc_a(const uint8_t *data, size_t len, uint8_t crc_out[2]);
 static inline uint8_t iso14443_parity(uint8_t b);
 void restore_link_layer_defaults(void);
-bool PN532_AuthKnownCapture(uint8_t  block,
-    char     keyType,
-    const uint8_t key[6],
-    const uint8_t uid[4],
-    uint8_t  Nt1[4],
-    uint8_t  Nr[4],
-    uint8_t  At1[4],
-    uint8_t  Ar1[4]);
 
 bool read_registerGeneric(uint8_t addr_high, uint8_t addr_low, uint8_t *value_out);
 void write_registerGeneric(uint8_t addr_high, uint8_t addr_low, uint8_t value);
